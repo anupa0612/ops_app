@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ops Break Console · Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0b1221;
+      --accent: #4f9cff;
+      --accent-soft: rgba(79, 156, 255, 0.15);
+      --border: #25324a;
+      --text: #f7f9ff;
+      --muted: #a8b4d4;
+      --danger: #ff6b81;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top, #1c2b4f 0, transparent 60%),
+        radial-gradient(circle at bottom, #101829 0, #050816 70%);
+      color: var(--text);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(135deg, #0b1221 0%, #070a12 100%);
+      border-radius: 20px;
+      padding: 32px 28px 28px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(79,156,255,0.25);
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #050816;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(79, 156, 255, 0.6);
+      background: #070b18;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #4f9cff, #8b5cff);
+      color: white;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.45);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 16px 40px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45);
+    }
+
+    .error {
+      margin-top: 12px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 107, 129, 0.12);
+      border: 1px solid rgba(255, 107, 129, 0.45);
+      color: var(--danger);
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Cash Reconciliation · Ops
+    </div>
+    <h1>Ops Break Console</h1>
+    <p class="subtitle">Sign in to clear and track reconciliation breaks.</p>
+
+    <form method="post">
+      <div class="field">
+        <label for="username">User ID</label>
+        <input id="username" name="username" type="text" autocomplete="username" required />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+
+      <button class="btn" type="submit">Sign in</button>
+
+      {% if error %}
+      <div class="error">
+        {{ error }}
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</body>
+</html>

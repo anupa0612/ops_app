@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Ops Break Console · Manage Users</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* --- copy same root + layout styles from console.html --- */
+    :root {
+      --bg: #050816;
+      --bg-soft: #0a1020;
+      --panel: #0d1426;
+      --panel-soft: #121a30;
+      --accent: #4f9cff;
+      --accent-soft: rgba(79, 156, 255, 0.12);
+      --danger: #ff6b81;
+      --border: #252f4a;
+      --border-soft: #1b2340;
+      --text: #f5f7ff;
+      --muted: #a8b4d4;
+      --muted-soft: #6e7aa0;
+      --success: #22c55e;
+      --warn: #eab308;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, #1b2648 0, transparent 60%),
+        radial-gradient(circle at bottom, #090f1e 0, #050816 70%);
+      color: var(--text);
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(120deg, rgba(12, 19, 40, 0.96), rgba(3, 7, 18, 0.98));
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-main {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .title-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px 4px 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.24);
+    }
+
+    .user-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .user-name {
+      color: var(--muted);
+    }
+
+    .btn-ghost {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(7, 11, 24, 0.9);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* admin menu same as console */
+    .admin-menu {
+      position: relative;
+    }
+
+    .admin-menu>.btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 18px;
+    }
+
+    .admin-menu>.btn-ghost::after {
+      content: "▾";
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .admin-dropdown {
+      position: absolute;
+      right: 0;
+      top: 115%;
+      min-width: 220px;
+      background: var(--panel-soft);
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+      padding: 6px 0;
+      display: none;
+      z-index: 100;
+    }
+
+    .admin-dropdown a {
+      display: block;
+      padding: 8px 14px;
+      font-size: 13px;
+      text-decoration: none;
+      color: var(--muted);
+    }
+
+    .admin-dropdown a:hover {
+      background: rgba(79, 156, 255, 0.18);
+      color: var(--text);
+    }
+
+    .admin-menu.open .admin-dropdown {
+      display: block;
+    }
+
+    main {
+      flex: 1;
+      padding: 16px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: linear-gradient(160deg, rgba(9, 14, 30, 0.98), rgba(8, 13, 28, 0.98));
+      border-radius: 16px;
+      border: 1px solid var(--border-soft);
+      padding: 16px 18px 16px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 8px 8px;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--muted);
+      background: rgba(10, 16, 35, 0.98);
+    }
+
+    tbody td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(26, 31, 56, 0.7);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(18, 24, 48, 0.35);
+    }
+
+    .btn-primary {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #4f9cff, #8b5cff);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-danger {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--danger);
+      background: transparent;
+      color: var(--danger);
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .field label {
+      color: var(--muted-soft);
+    }
+
+    input,
+    select {
+      padding: 7px 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #050816;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(79, 156, 255, 0.7);
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .form-actions {
+      margin-top: 10px;
+    }
+
+    a.link-back {
+      font-size: 13px;
+      color: var(--muted-soft);
+      text-decoration: none;
+    }
+
+    a.link-back:hover {
+      color: var(--accent);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="title-block">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Cash Recon · Ops Break Console
+        </div>
+        <div class="title-main">Manage Users</div>
+        <div class="title-sub">Create and maintain Ops console logins.</div>
+      </div>
+      <div class="user-block">
+        <span class="user-name">
+          Signed in as <strong>{{ ops_user }}</strong>
+          {% if ops_role == "admin" %}<span style="opacity:.7;">(admin)</span>{% endif %}
+        </span>
+
+        {% if ops_role == "admin" %}
+        <div class="admin-menu">
+          <button class="btn-ghost admin-toggle" type="button">Admin</button>
+          <div class="admin-dropdown">
+            <a href="{{ url_for('admin_users') }}">Manage Users</a>
+            <a href="{{ url_for('admin_aged_breaks') }}">Aged Breaks (20+ days)</a>
+            <a href="{{ url_for('admin_cleared_summary') }}">Cleared Breaks by User</a>
+            <a href="{{ url_for('console') }}">Back to Break Console</a>
+          </div>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}">
+          <button class="btn-ghost" type="button">Sign out</button>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Existing Users</div>
+            <div class="card-sub">Users who can access the Ops Break Console.</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th style="width:120px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td>{{ u.username }}</td>
+              <td style="text-transform:capitalize;">{{ u.role }}</td>
+              <td>
+                <form method="post" action="{{ url_for('admin_delete_user') }}" style="margin:0;">
+                  <input type="hidden" name="username" value="{{ u.username }}">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+            {% if users|length == 0 %}
+            <tr>
+              <td colspan="3" style="color:var(--muted-soft);">No users found.</td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Add New User</div>
+            <div class="card-sub">Create a new login for the Ops break console.</div>
+          </div>
+        </div>
+
+        <form method="post" action="{{ url_for('admin_add_user') }}">
+          <div class="form-row">
+            <div class="field">
+              <label>Username</label>
+              <input type="text" name="username" required />
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" name="password" required />
+            </div>
+            <div class="field">
+              <label>Role</label>
+              <select name="role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Add User</button>
+          </div>
+        </form>
+      </section>
+
+      <a href="{{ url_for('console') }}" class="link-back">← Back to Outstanding &amp; Cleared Breaks</a>
+    </main>
+  </div>
+
+  <script>
+    // same admin-menu toggle as console
+    document.addEventListener("click", (e) => {
+      const menu = document.querySelector(".admin-menu");
+      if (!menu) return;
+      const btn = menu.querySelector(".admin-toggle");
+      if (btn && btn.contains(e.target)) {
+        menu.classList.toggle("open");
+      } else if (!menu.contains(e.target)) {
+        menu.classList.remove("open");
+      }
+    });
+  </script>
+</body>
+
+</html>

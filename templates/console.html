@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Ops Break Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-soft: #0a1020;
+      --panel: #0d1426;
+      --panel-soft: #121a30;
+      --accent: #4f9cff;
+      --accent-soft: rgba(79, 156, 255, 0.12);
+      --danger: #ff6b81;
+      --border: #252f4a;
+      --border-soft: #1b2340;
+      --text: #f5f7ff;
+      --muted: #a8b4d4;
+      --muted-soft: #6e7aa0;
+      --success: #22c55e;
+      --warn: #eab308;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, #1b2648 0, transparent 60%),
+        radial-gradient(circle at bottom, #090f1e 0, #050816 70%);
+      color: var(--text);
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(120deg, rgba(12, 19, 40, 0.96), rgba(3, 7, 18, 0.98));
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-main {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .title-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px 4px 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.24);
+    }
+
+    .user-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    /* Admin dropdown */
+    .admin-menu {
+      position: relative;
+    }
+
+    .admin-menu > .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 18px;
+    }
+
+    .admin-menu > .btn-ghost::after {
+      content: "▾";
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .admin-dropdown {
+      position: absolute;
+      right: 0;
+      top: 115%;
+      min-width: 220px;
+      background: var(--panel-soft);
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+      padding: 6px 0;
+      display: none;
+      z-index: 100;
+    }
+
+    .admin-dropdown a {
+      display: block;
+      padding: 8px 14px;
+      font-size: 13px;
+      text-decoration: none;
+      color: var(--muted);
+    }
+
+    .admin-dropdown a:hover {
+      background: rgba(79, 156, 255, 0.18);
+      color: var(--text);
+    }
+
+    /* show menu on hover */
+    .admin-menu:hover .admin-dropdown {
+      display: block;
+    }
+
+
+    .user-name {
+      color: var(--muted);
+    }
+
+    .btn-ghost {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(7, 11, 24, 0.9);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    main {
+      flex: 1;
+      padding: 16px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: linear-gradient(145deg, rgba(13, 20, 38, 0.96), rgba(12, 19, 40, 0.96));
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+    }
+
+    .field label {
+      color: var(--muted-soft);
+      font-weight: 500;
+    }
+
+    select {
+      min-width: 180px;
+    }
+
+    select,
+    input[type="text"] {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #050816;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      min-height: 34px;
+    }
+
+    select:focus,
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(79, 156, 255, 0.7);
+    }
+
+    .btn-primary {
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #4f9cff, #8b5cff);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.55);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 22px rgba(37, 99, 235, 0.5);
+    }
+
+    .btn-secondary {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #050816;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .content-card {
+      flex: 1;
+      background: linear-gradient(160deg, rgba(9, 14, 30, 0.98), rgba(8, 13, 28, 0.98));
+      border-radius: 16px;
+      border: 1px solid var(--border-soft);
+      padding: 14px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-soft);
+      padding: 0 4px 8px;
+    }
+
+    .tab-btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--muted-soft);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--text);
+      border: 1px solid rgba(79, 156, 255, 0.6);
+    }
+
+    .tab-content {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    .table-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 2px;
+      font-size: 13px;
+      color: var(--muted-soft);
+    }
+
+    .search-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .search-row input {
+      width: 160px;
+      font-size: 13px;
+      padding: 6px 8px;
+      min-height: 30px;
+    }
+
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      border-radius: 12px;
+      background: radial-gradient(circle at top, #121b3a 0, #060a18 60%);
+      border: 1px solid var(--border);
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: rgba(10, 16, 35, 0.98);
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--muted);
+      font-weight: 500;
+      background: radial-gradient(circle at top, #162243 0, #070b15 70%);
+    }
+
+    tbody {
+      background: rgba(4, 7, 16, 0.96);
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: rgba(18, 24, 48, 0.7);
+    }
+
+    tbody tr:hover {
+      background-color: rgba(79, 156, 255, 0.12);
+    }
+
+    td {
+      padding: 6px 6px;
+      border-bottom: 1px solid rgba(26, 31, 56, 0.7);
+      vertical-align: top;
+    }
+
+    .col-checkbox {
+      width: 40px;
+      text-align: center;
+    }
+
+    .col-money {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .comments-input {
+      width: 100%;
+      min-width: 200px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      background: rgba(3, 7, 18, 0.96);
+      color: var(--text);
+      font-size: 13px;
+      resize: vertical;
+      min-height: 30px;
+    }
+
+    .comments-input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 1px rgba(79, 156, 255, 0.5);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #bbf7d0;
+    }
+
+    .status-pill.pending {
+      background: rgba(234, 179, 8, 0.12);
+      color: #facc15;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .table-footer {
+      padding: 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted-soft);
+      border-top: 1px solid var(--border-soft);
+      background: rgba(7, 11, 20, 0.96);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge-count {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(22, 163, 74, 0.12);
+      color: #bbf7d0;
+      font-size: 11px;
+    }
+
+    .badge-count.light {
+      background: rgba(79, 156, 255, 0.15);
+      color: #bfdbfe;
+    }
+
+    .error-banner {
+      margin-top: 4px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(248, 113, 113, 0.7);
+      background: rgba(248, 113, 113, 0.1);
+      color: #fecaca;
+      font-size: 12px;
+    }
+
+    .message-banner {
+      margin-top: 4px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(59, 130, 246, 0.7);
+      background: rgba(59, 130, 246, 0.1);
+      color: #dbeafe;
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        padding: 12px;
+      }
+
+      header {
+        padding-inline: 12px;
+      }
+
+      .toolbar {
+        padding: 10px 10px;
+      }
+
+      select,
+      input[type="text"] {
+        min-width: 140px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="title-block">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Cash Recon · Ops Break Console
+        </div>
+        <div class="title-main">Outstanding & Cleared Breaks</div>
+        <div class="title-sub">View, clear, undo and export cash reconciliation breaks.</div>
+      </div>
+        <div class="user-block">
+          <span class="user-name">
+            Signed in as <strong>{{ ops_user }}</strong>
+            {% if ops_role == "admin" %}<span style="opacity:.7;">(admin)</span>{% endif %}
+          </span>
+
+          {% if ops_role == "admin" %}
+          <div class="admin-menu">
+            <button class="btn-ghost" type="button">
+              Admin
+            </button>
+            <div class="admin-dropdown">
+              <a href="{{ url_for('admin_users') }}">Manage Users</a>
+              <a href="{{ url_for('admin_aged_breaks') }}">Aged Breaks (20+ days)</a>
+              <a href="{{ url_for('admin_cleared_summary') }}">Cleared Breaks by User</a>
+            </div>
+          </div>
+          {% endif %}
+
+          <a href="{{ url_for('logout') }}">
+            <button class="btn-ghost" type="button">Sign out</button>
+          </a>
+        </div>
+    </header>
+
+    <main>
+      <!-- Top toolbar: Account/Broker + Load -->
+      <section class="toolbar">
+        <div class="field">
+          <label for="accountSelect">Account</label>
+          <select id="accountSelect">
+            <option value="">Select account</option>
+            {% for acc in accounts %}
+            <option value="{{ acc }}">{{ acc }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="brokerSelect">Broker</label>
+          <select id="brokerSelect">
+            <option value="">Select broker</option>
+            {% for b in brokers %}
+            <option value="{{ b }}">{{ b }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="btnLoad" class="btn-primary" type="button">
+            Load Breaks
+          </button>
+        </div>
+
+        <div id="loadMessage" class="field" style="flex:1; min-width:180px;">
+          <label>Current status</label>
+          <div id="statusText" class="title-sub">Select account &amp; broker and click <strong>Load Breaks</strong>.
+          </div>
+        </div>
+      </section>
+
+      <!-- Main content -->
+      <section class="content-card">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="outstanding">Outstanding Breaks</button>
+          <button class="tab-btn" data-tab="cleared">Cleared Breaks</button>
+        </div>
+
+        <!-- Outstanding tab -->
+        <div class="tab-content active" id="tab-outstanding">
+          <div class="table-toolbar">
+            <div class="search-row">
+              <input id="searchOutSymbol" type="text" placeholder="Search Symbol" />
+              <input id="searchOutDesc" type="text" placeholder="Search Description" />
+              <input id="searchOutAT" type="text" placeholder="Search AT" />
+              <input id="searchOutBroker" type="text" placeholder="Search Broker" />
+            </div>
+            <div class="actions">
+              <button id="btnClearSelected" class="btn-primary" type="button">Clear Selected</button>
+              <button id="btnUndoSelectedOut" class="btn-secondary" type="button">Undo Selected</button>
+              <button id="btnExportOutstanding" class="btn-secondary" type="button">Export Excel</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div style="overflow:auto; flex:1; min-height:0;">
+              <table id="tableOutstanding">
+                <thead>
+                  <tr>
+                    <th class="col-checkbox"><input type="checkbox" id="chkOutAll" /></th>
+                    <th style="width:90px;">Date</th>
+                    <th style="width:70px; text-align:right;">Age</th>
+                    <th style="width:90px;">Symbol</th>
+                    <th>Description</th>
+                    <th style="width:110px; text-align:right;">AT</th>
+                    <th style="width:110px; text-align:right;">Broker</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:260px;">Comments (editable)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+            <div class="table-footer">
+              <span id="outCount" class="badge-count light">0 rows</span>
+              <span style="font-size:12px;">Tip: Click in the Comments cell to add notes, they will sync back to Cash
+                Recon Pro.</span>
+            </div>
+          </div>
+          <div id="outError" class="error-banner" style="display:none;"></div>
+        </div>
+
+        <!-- Cleared tab -->
+        <div class="tab-content" id="tab-cleared">
+          <div class="table-toolbar">
+            <div class="search-row">
+              <input id="searchClSymbol" type="text" placeholder="Search Symbol" />
+              <input id="searchClDesc" type="text" placeholder="Search Description" />
+              <input id="searchClAT" type="text" placeholder="Search AT" />
+              <input id="searchClBroker" type="text" placeholder="Search Broker" />
+            </div>
+            <div class="actions">
+              <button id="btnUndoSelectedCl" class="btn-secondary" type="button">Undo Selected</button>
+              <button id="btnExportCleared" class="btn-secondary" type="button">Export Excel</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div style="overflow:auto; flex:1; min-height:0;">
+              <table id="tableCleared">
+                <thead>
+                  <tr>
+                    <th class="col-checkbox"><input type="checkbox" id="chkClAll" /></th>
+                    <th style="width:90px;">Date</th>
+                    <th style="width:90px;">Symbol</th>
+                    <th>Description</th>
+                    <th style="width:110px;" class="col-money">AT</th>
+                    <th style="width:110px;" class="col-money">Broker</th>
+                    <th style="width:140px;">Cleared By</th>
+                    <th style="width:140px;">Cleared Date</th>
+                    <th style="width:150px;">Matched Date (Rec)</th>
+                    <th style="width:120px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+            <div class="table-footer">
+              <span id="clCount" class="badge-count">0 rows</span>
+              <span style="font-size:12px;">Status shows whether Rec has already matched the cleared breaks.</span>
+            </div>
+          </div>
+          <div id="clError" class="error-banner" style="display:none;"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      outstanding: [],
+      cleared: [],
+    };
+
+    const accountSelect = document.getElementById("accountSelect");
+    const brokerSelect = document.getElementById("brokerSelect");
+    const statusText = document.getElementById("statusText");
+    const outTbody = document.querySelector("#tableOutstanding tbody");
+    const clTbody = document.querySelector("#tableCleared tbody");
+    const outError = document.getElementById("outError");
+    const clError = document.getElementById("clError");
+    const outCount = document.getElementById("outCount");
+    const clCount = document.getElementById("clCount");
+
+    const searchOutSymbol = document.getElementById("searchOutSymbol");
+    const searchOutDesc = document.getElementById("searchOutDesc");
+    const searchOutAT = document.getElementById("searchOutAT");
+    const searchOutBroker = document.getElementById("searchOutBroker");
+
+    const searchClSymbol = document.getElementById("searchClSymbol");
+    const searchClDesc = document.getElementById("searchClDesc");
+    const searchClAT = document.getElementById("searchClAT");
+    const searchClBroker = document.getElementById("searchClBroker");
+
+    const chkOutAll = document.getElementById("chkOutAll");
+    const chkClAll = document.getElementById("chkClAll");
+
+    function showError(target, msg) {
+      if (!msg) {
+        target.style.display = "none";
+        target.textContent = "";
+        return;
+      }
+      target.style.display = "block";
+      target.textContent = msg;
+    }
+
+    function formatMoney(v) {
+      const n = Number(v || 0);
+      if (isNaN(n) || Math.abs(n) < 0.005) return "";
+      return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function getFiltersForOutstanding() {
+      return {
+        symbol: searchOutSymbol.value.toLowerCase(),
+        desc: searchOutDesc.value.toLowerCase(),
+        at: searchOutAT.value.toLowerCase(),
+        broker: searchOutBroker.value.toLowerCase(),
+      };
+    }
+
+    function getFiltersForCleared() {
+      return {
+        symbol: searchClSymbol.value.toLowerCase(),
+        desc: searchClDesc.value.toLowerCase(),
+        at: searchClAT.value.toLowerCase(),
+        broker: searchClBroker.value.toLowerCase(),
+      };
+    }
+
+    function renderOutstanding() {
+      outTbody.innerHTML = "";
+      const filters = getFiltersForOutstanding();
+      const rows = state.outstanding.filter(r => {
+        if (filters.symbol && !String(r.symbol || "").toLowerCase().includes(filters.symbol)) return false;
+        if (filters.desc && !String(r.description || "").toLowerCase().includes(filters.desc)) return false;
+        if (filters.at && !String(r.at || "").toLowerCase().includes(filters.at)) return false;
+        if (filters.broker && !String(r.broker || "").toLowerCase().includes(filters.broker)) return false;
+        return true;
+      });
+
+      rows.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+
+        const statusLabel =
+          r.status === "AWAITING_REC_MATCH" ? "Awaiting Rec" : "Open";
+        const statusClass =
+          r.status === "AWAITING_REC_MATCH" ? "status-pill pending" : "status-pill";
+
+        tr.innerHTML = `
+          <td class="col-checkbox">
+            <input type="checkbox" class="chk-out-row" data-index="${idx}">
+          </td>
+          <td>${r.date || ""}</td>
+          <td class="col-money">
+            ${r.age === "" || r.age == null ? "" : r.age}
+          </td>
+          <td>${r.symbol || ""}</td>
+          <td>${r.description || ""}</td>
+          <td class="col-money">${formatMoney(r.at)}</td>
+          <td class="col-money">${formatMoney(r.broker)}</td>
+          <td>
+            <span class="${statusClass}">
+              <span class="status-dot"></span>
+              ${statusLabel}
+            </span>
+          </td>
+          <td>
+            <textarea class="comments-input" data-index="${idx}">${r.comments || ""}</textarea>
+          </td>
+        `;
+        outTbody.appendChild(tr);
+      });
+
+      outCount.textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
+    }
+
+
+
+    function renderCleared() {
+      clTbody.innerHTML = "";
+      const filters = getFiltersForCleared();
+      const rows = state.cleared.filter(r => {
+        if (filters.symbol && !String(r.symbol || "").toLowerCase().includes(filters.symbol)) return false;
+        if (filters.desc && !String(r.description || "").toLowerCase().includes(filters.desc)) return false;
+        if (filters.at && !String(r.at || "").toLowerCase().includes(filters.at)) return false;
+        if (filters.broker && !String(r.broker || "").toLowerCase().includes(filters.broker)) return false;
+        return true;
+      });
+
+      rows.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+        const statusClass = r.status === "MATCHED_IN_REC" ? "status-pill" : "status-pill pending";
+        const statusLabel = r.status === "MATCHED_IN_REC" ? "Matched in Rec" : "Awaiting Rec";
+        tr.innerHTML = `
+          <td class="col-checkbox">
+            <input type="checkbox" class="chk-cl-row" data-index="${idx}">
+          </td>
+          <td>${r.date || ""}</td>
+          <td>${r.symbol || ""}</td>
+          <td>${r.description || ""}</td>
+          <td class="col-money">${formatMoney(r.at)}</td>
+          <td class="col-money">${formatMoney(r.broker)}</td>
+          <td>${r.cleared_by || ""}</td>
+          <td>${r.cleared_at || ""}</td>
+          <td>${r.matched_date || ""}</td>
+          <td>
+            <span class="${statusClass}">
+              <span class="status-dot"></span>
+              ${statusLabel}
+            </span>
+          </td>
+        `;
+        clTbody.appendChild(tr);
+      });
+
+      clCount.textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
+    }
+
+    async function loadBreaks() {
+      const account = accountSelect.value;
+      const broker = brokerSelect.value;
+      showError(outError, "");
+      showError(clError, "");
+
+      if (!account || !broker) {
+        showError(outError, "Please select both Account and Broker.");
+        return;
+      }
+
+      statusText.textContent = "Loading breaks from Cash Recon…";
+      try {
+        const res = await fetch("/api/load_breaks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account, broker }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+          showError(outError, data.error || "Failed to load breaks.");
+          state.outstanding = [];
+          state.cleared = [];
+          renderOutstanding();
+          renderCleared();
+          statusText.textContent = "Failed to load. Please check and retry.";
+          return;
+        }
+
+        state.outstanding = data.outstanding || [];
+        state.cleared = data.cleared || [];
+        renderOutstanding();
+        renderCleared();
+
+        if (data.message) {
+          statusText.textContent = data.message;
+        } else {
+          statusText.textContent = `Loaded ${state.outstanding.length} outstanding and ${state.cleared.length} cleared rows.`;
+        }
+      } catch (err) {
+        console.error(err);
+        showError(outError, "Error while loading data.");
+        statusText.textContent = "Error while loading. See console/logs.";
+      }
+    }
+
+    async function clearSelected() {
+      const account = accountSelect.value;
+      const broker = brokerSelect.value;
+      if (!account || !broker) {
+        showError(outError, "Select Account and Broker first.");
+        return;
+      }
+
+      const checkboxes = document.querySelectorAll(".chk-out-row");
+      const rows = [];
+      checkboxes.forEach(ch => {
+        if (ch.checked) {
+          const idx = Number(ch.dataset.index);
+          const row = state.outstanding[idx];
+          if (row) {
+            rows.push({ rowid: row.rowid, signature: row.signature });
+          }
+        }
+      });
+
+      if (!rows.length) {
+        showError(outError, "No rows selected.");
+        return;
+      }
+
+      showError(outError, "");
+      statusText.textContent = "Marking selected rows as cleared…";
+
+      try {
+        const res = await fetch("/api/clear_rows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account, broker, rows }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showError(outError, data.error || "Failed to clear rows.");
+          statusText.textContent = "Failed to clear breaks.";
+          return;
+        }
+        await loadBreaks();
+        statusText.textContent = "Selected rows marked as cleared.";
+      } catch (err) {
+        console.error(err);
+        showError(outError, "Error while clearing rows.");
+        statusText.textContent = "Error while clearing.";
+      }
+    }
+
+    async function undoSelected(sourceTab) {
+      const account = accountSelect.value;
+      const broker = brokerSelect.value;
+      if (!account || !broker) {
+        const target = sourceTab === "out" ? outError : clError;
+        showError(target, "Select Account and Broker first.");
+        return;
+      }
+
+      const rows = [];
+      if (sourceTab === "out") {
+        const checkboxes = document.querySelectorAll(".chk-out-row");
+        checkboxes.forEach(ch => {
+          if (ch.checked) {
+            const idx = Number(ch.dataset.index);
+            const row = state.outstanding[idx];
+            if (row) {
+              rows.push({
+                source: "rec",
+                rowid: row.rowid,
+                signature: row.signature,
+              });
+            }
+          }
+        });
+      } else {
+        const checkboxes = document.querySelectorAll(".chk-cl-row");
+        checkboxes.forEach(ch => {
+          if (ch.checked) {
+            const idx = Number(ch.dataset.index);
+            const row = state.cleared[idx];
+            if (row) {
+              rows.push({
+                source: row.source || "rec",
+                rowid: row.rowid || null,
+                signature: row.signature,
+              });
+            }
+          }
+        });
+      }
+
+      if (!rows.length) {
+        const target = sourceTab === "out" ? outError : clError;
+        showError(target, "No rows selected.");
+        return;
+      }
+
+      const target = sourceTab === "out" ? outError : clError;
+      showError(target, "");
+      statusText.textContent = "Undoing selected clears/comments…";
+
+      try {
+        const res = await fetch("/api/undo_rows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account, broker, rows }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showError(target, data.error || "Failed to undo.");
+          statusText.textContent = "Undo failed.";
+          return;
+        }
+        await loadBreaks();
+        statusText.textContent = "Undo completed.";
+      } catch (err) {
+        console.error(err);
+        showError(target, "Error while undoing.");
+        statusText.textContent = "Error while undoing.";
+      }
+    }
+
+    async function exportExcel(type) {
+      const endpoint = type === "outstanding" ? "/export/outstanding" : "/export/cleared";
+      const payload = type === "outstanding"
+        ? { outstanding: state.outstanding }
+        : { cleared: state.cleared };
+
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          alert("Export failed: " + text);
+          return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = (type === "outstanding" ? "Outstanding_Breaks.xlsx" : "Cleared_Breaks.xlsx");
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error(err);
+        alert("Error while exporting Excel.");
+      }
+    }
+
+    async function saveComment(idx) {
+      const account = accountSelect.value;
+      const broker = brokerSelect.value;
+      if (!account || !broker) {
+        showError(outError, "Select Account and Broker first.");
+        return;
+      }
+
+      const row = state.outstanding[idx];
+      if (!row) return;
+
+      const textarea = document.querySelector(
+        `.comments-input[data-index="${idx}"]`
+      );
+      if (!textarea) return;
+
+      const newText = textarea.value;
+
+      try {
+        const res = await fetch("/api/update_comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account,
+            broker,
+            rowid: row.rowid,
+            comment: newText,
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showError(outError, data.error || "Failed to update comment.");
+          return;
+        }
+        row.comments = data.comment;
+      } catch (err) {
+        console.error(err);
+        showError(outError, "Error while updating comment.");
+      }
+    }
+
+    // ---------- Event wiring ----------
+    document.getElementById("btnLoad").addEventListener("click", loadBreaks);
+    document.getElementById("btnClearSelected").addEventListener("click", clearSelected);
+    document.getElementById("btnUndoSelectedOut").addEventListener("click", () => undoSelected("out"));
+    document.getElementById("btnUndoSelectedCl").addEventListener("click", () => undoSelected("cl"));
+    document.getElementById("btnExportOutstanding").addEventListener("click", () => exportExcel("outstanding"));
+    document.getElementById("btnExportCleared").addEventListener("click", () => exportExcel("cleared"));
+
+    [searchOutSymbol, searchOutDesc, searchOutAT, searchOutBroker].forEach(inp => {
+      inp.addEventListener("input", renderOutstanding);
+    });
+    [searchClSymbol, searchClDesc, searchClAT, searchClBroker].forEach(inp => {
+      inp.addEventListener("input", renderCleared);
+    });
+
+    chkOutAll.addEventListener("change", () => {
+      document.querySelectorAll(".chk-out-row").forEach(ch => {
+        ch.checked = chkOutAll.checked;
+      });
+    });
+
+    chkClAll.addEventListener("change", () => {
+      document.querySelectorAll(".chk-cl-row").forEach(ch => {
+        ch.checked = chkClAll.checked;
+      });
+    });
+
+    outTbody.addEventListener("blur", (e) => {
+      if (e.target.classList.contains("comments-input")) {
+        const idx = Number(e.target.dataset.index);
+        saveComment(idx);
+      }
+    }, true);
+
+    // Tabs
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.dataset.tab;
+        document.querySelectorAll(".tab-content").forEach(p => {
+          p.classList.remove("active");
+        });
+        document.getElementById("tab-" + tab).classList.add("active");
+      });
+    });
+  </script>
+</body>
+
+</html>

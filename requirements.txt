@@ -1,0 +1,7 @@
+flask
+gunicorn
+pymongo
+pandas
+numpy
+python-dotenv
+xlsxwriter
