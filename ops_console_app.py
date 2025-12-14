@@ -820,6 +820,121 @@ def admin_assign_breaks():
 
     return redirect(url_for("admin_aged_breaks"))
 
+@app.route("/assigned", methods=["GET"])
+@login_required
+def my_assigned_breaks():
+    accounts = mongo_handler.load_accounts_list()
+    return render_template(
+        "my_assigned_breaks.html",
+        accounts=accounts,
+        brokers=BROKER_LABELS,
+        ops_user=session.get("ops_user"),
+        ops_role=session.get("ops_role", "user"),
+    )
+
+@app.route("/api/my_assigned_breaks", methods=["POST"])
+@login_required
+def api_my_assigned_breaks():
+    data = request.get_json(force=True) or {}
+    account = (data.get("account") or "").strip()
+    broker_label = (data.get("broker") or "").strip()
+
+    if not account or not broker_label:
+        return jsonify(ok=False, error="Account and Broker are required"), 400
+
+    broker_key = _pick_broker_key(broker_label)
+    rec_key = make_rec_key(account, broker_key)
+    username = session.get("ops_user")
+
+    # open assignments for this user / rec
+    assigned_docs = list(
+        ops_assigned_col.find(
+            {
+                "account": account,
+                "broker": broker_key,
+                "assigned_to": username,
+                "status": "OPEN",
+            },
+            {"_id": 0, "signature": 1},
+        )
+    )
+    sigs = {d["signature"] for d in assigned_docs}
+    if not sigs:
+        return jsonify(ok=True, rows=[])
+
+    df = mongo_handler.load_session_rec(rec_key)
+    if df is None or df.empty:
+        return jsonify(ok=True, rows=[])
+
+    for col in [
+        "OurFlag",
+        "BrkFlag",
+        "Comments",
+        "RowID",
+        "Date",
+        "Symbol",
+        "Description",
+        "AT",
+        "Broker",
+    ]:
+        if col not in df.columns:
+            if col == "RowID":
+                df[col] = range(1, len(df) + 1)
+            else:
+                df[col] = "" if col not in ("AT", "Broker") else 0.0
+
+    df["OurFlag"] = df["OurFlag"].fillna("").astype(str)
+    df["BrkFlag"] = df["BrkFlag"].fillna("").astype(str)
+    df["Comments"] = df["Comments"].fillna("").astype(str)
+
+    # only still unmatched
+    mask_unmatched = (df["OurFlag"] == "") & (df["BrkFlag"] == "")
+    df_breaks = df.loc[mask_unmatched].copy()
+    if df_breaks.empty:
+        return jsonify(ok=True, rows=[])
+
+    df_breaks["Signature"] = df_breaks.apply(
+        lambda r: _build_signature(
+            r.get("Date"),
+            r.get("Symbol"),
+            r.get("Description"),
+            r.get("AT"),
+            r.get("Broker"),
+        ),
+        axis=1,
+    )
+
+    today = datetime.utcnow().date()
+    rows = []
+    for _, r in df_breaks.iterrows():
+        sig = r["Signature"]
+        if sig not in sigs:
+            continue
+
+        date_val = pd.to_datetime(r.get("Date"), errors="coerce")
+        if pd.notna(date_val):
+            date_str = date_val.strftime("%Y-%m-%d")
+            age_days = (today - date_val.date()).days
+        else:
+            date_str = ""
+            age_days = ""
+
+        rows.append(
+            {
+                "rowid": int(r.get("RowID")),
+                "signature": sig,
+                "date": date_str,
+                "age": age_days,
+                "symbol": str(r.get("Symbol") or ""),
+                "description": str(r.get("Description") or ""),
+                "at": float(r.get("AT") or 0.0),
+                "broker": float(r.get("Broker") or 0.0),
+                "comments": str(r.get("Comments") or ""),
+            }
+        )
+
+    return jsonify(ok=True, rows=rows)
+
 
 # -------------------------------------------------
 # ADMIN: Cleared Breaks by User (summary per day)
@@ -1198,4 +1313,5 @@ def export_cleared():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))  # 👈 use Railway PORT
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
