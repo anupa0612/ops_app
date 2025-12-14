@@ -658,7 +658,8 @@
         if (filters.symbol && !String(r.symbol || "").toLowerCase().includes(filters.symbol)) return false;
         if (filters.desc && !String(r.description || "").toLowerCase().includes(filters.desc)) return false;
         if (filters.at && !String(r.at || "").toLowerCase().includes(filters.at)) return false;
-        if (filters.broker && !String(r.broker_label || "").toLowerCase().includes(filters.broker)) return false;
+        if (filters.broker &&!String(r.broker_label || "").toLowerCase().includes(filters.broker)) return false;
+
         return true;
       });
 
