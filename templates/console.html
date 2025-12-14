@@ -524,11 +524,23 @@
         <div class="title-main">Outstanding & Cleared Breaks</div>
         <div class="title-sub">View, clear, undo and export cash reconciliation breaks.</div>
       </div>
-        <div class="user-block">
-          <span class="user-name">
-            Signed in as <strong>{{ ops_user }}</strong>
-            {% if ops_role == "admin" %}<span style="opacity:.7;">(admin)</span>{% endif %}
-          </span>
+          <div class="user-block">
+            <span class="user-name">
+              Signed in as <strong>{{ ops_user }}</strong>
+              {% if ops_role == "admin" %}
+                <span style="opacity:.7;">(admin)</span>
+              {% endif %}
+            </span>
+          
+            <!-- My Assigned Breaks button for all users -->
+            <a href="{{ url_for('my_assigned_breaks') }}">
+              <button class="btn-ghost" type="button">My Assigned Breaks</button>
+            </a>
+          
+            <a href="{{ url_for('logout') }}">
+              <button class="btn-ghost" type="button">Sign out</button>
+            </a>
+          </div>
 
           {% if ops_role == "admin" %}
           <div class="admin-menu">
@@ -1132,5 +1144,6 @@
     });
   </script>
 </body>
+
 
 </html>
