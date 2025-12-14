@@ -677,8 +677,14 @@
           <td>${r.symbol || ""}</td>
           <td>${r.description || ""}</td>
           <td class="col-money">${formatMoney(r.at)}</td>
-          <td class="col-money">${formatMoney(r.broker_amt)}</td>
           <td>
+            <span class="assigned-pill">
+              <span class="status-dot"></span>
+              ${r.assigned_to || r.assigned_by || "Assigned"}
+              ${r.assigned_at ? " · " + r.assigned_at : ""}
+            </span>
+          </td>
+
             <span class="assigned-pill">
               <span class="status-dot"></span>
               ${r.assigned_by || "Assigned"}
