@@ -37,6 +37,8 @@ mongo_client = MongoClient(MONGODB_URI)
 ops_db = mongo_client[MONGODB_DB_NAME]
 ops_cleared_col = ops_db["ops_cleared_breaks"]
 ops_users_col = ops_db["ops_users"]
+ops_assigned_col = ops_db["ops_assigned_breaks"]  # NEW
+
 
 
 app = Flask(__name__)
@@ -648,25 +650,56 @@ def undo_rows():
 @app.route("/admin/aged_breaks", methods=["GET"])
 @admin_required
 def admin_aged_breaks():
-    min_age = 20  # fixed 20 days, you can make it configurable later
+    min_age = 20
     today = datetime.utcnow().date()
+
+    # optional filters from query string
+    account_filter = (request.args.get("account") or "").strip()
+    broker_filter = (request.args.get("broker") or "").strip()
 
     aged_rows = []
 
-    # 1) Get all accounts from same list as console
+    # accounts list for dropdown
     accounts = mongo_handler.load_accounts_list() or []
 
-    # 2) Loop all accounts + brokers
+    # Pre-load assigned breaks so we can show "Assigned to X"
+    assigned_docs = list(
+        ops_assigned_col.find(
+            {"status": "OPEN"},
+            {"_id": 0, "account": 1, "broker": 1, "signature": 1, "assigned_to": 1},
+        )
+    )
+    assigned_lookup = {
+        (d["account"], d["broker"], d["signature"]): d["assigned_to"]
+        for d in assigned_docs
+    }
+
     for account in accounts:
+        # filter by account if chosen
+        if account_filter and account != account_filter:
+            continue
+
         for broker_label in BROKER_LABELS:
+            if broker_filter and broker_label != broker_filter:
+                continue
+
             broker_key = _pick_broker_key(broker_label)
             rec_key = make_rec_key(account, broker_key)
             df = mongo_handler.load_session_rec(rec_key)
             if df is None or df.empty:
                 continue
 
-            for col in ["OurFlag", "BrkFlag", "Comments", "RowID", "Date",
-                        "Symbol", "Description", "AT", "Broker"]:
+            for col in [
+                "OurFlag",
+                "BrkFlag",
+                "Comments",
+                "RowID",
+                "Date",
+                "Symbol",
+                "Description",
+                "AT",
+                "Broker",
+            ]:
                 if col not in df.columns:
                     if col == "RowID":
                         df[col] = range(1, len(df) + 1)
@@ -677,11 +710,22 @@ def admin_aged_breaks():
             df["BrkFlag"] = df["BrkFlag"].fillna("").astype(str)
             df["Comments"] = df["Comments"].fillna("").astype(str)
 
-            # only unmatched rows
             mask_unmatched = (df["OurFlag"] == "") & (df["BrkFlag"] == "")
             df_breaks = df.loc[mask_unmatched].copy()
             if df_breaks.empty:
                 continue
+
+            # build signatures
+            df_breaks["Signature"] = df_breaks.apply(
+                lambda r: _build_signature(
+                    r.get("Date"),
+                    r.get("Symbol"),
+                    r.get("Description"),
+                    r.get("AT"),
+                    r.get("Broker"),
+                ),
+                axis=1,
+            )
 
             for _, r in df_breaks.iterrows():
                 date_val = pd.to_datetime(r.get("Date"), errors="coerce")
@@ -695,10 +739,14 @@ def admin_aged_breaks():
                 if age_days is None or age_days < min_age:
                     continue
 
+                sig = r["Signature"]
+                assigned_to = assigned_lookup.get((account, broker_key, sig), "")
+
                 aged_rows.append(
                     {
                         "account": account,
-                        "broker": broker_label,
+                        "broker_label": broker_label,
+                        "broker_key": broker_key,
                         "date": date_str,
                         "age": age_days,
                         "symbol": str(r.get("Symbol") or ""),
@@ -706,18 +754,73 @@ def admin_aged_breaks():
                         "at": float(r.get("AT") or 0.0),
                         "broker_amt": float(r.get("Broker") or 0.0),
                         "comments": str(r.get("Comments") or ""),
+                        "signature": sig,
+                        "assigned_to": assigned_to,
                     }
                 )
 
-    # sort by age desc
     aged_rows.sort(key=lambda x: x["age"], reverse=True)
+
+    # load all users for Assign dropdown
+    users = list(
+        ops_users_col.find({}, {"_id": 0, "username": 1, "role": 1})
+    )
 
     return render_template(
         "admin_aged_breaks.html",
         rows=aged_rows,
         ops_user=session.get("ops_user"),
+        ops_role=session.get("ops_role", "user"),
         min_age=min_age,
+        accounts=accounts,
+        brokers=BROKER_LABELS,
+        users=users,
+        account_filter=account_filter,
+        broker_filter=broker_filter,
     )
+
+@app.route("/admin/assign_breaks", methods=["POST"])
+@admin_required
+def admin_assign_breaks():
+    assignee = (request.form.get("assignee") or "").strip()
+    selected = request.form.getlist("rows")  # each value: account||broker_key||signature
+
+    if not assignee or not selected:
+        # just go back – in real app you would flash a message
+        return redirect(url_for("admin_aged_breaks"))
+
+    admin_user = session.get("ops_user", "admin")
+    now = datetime.utcnow()
+
+    for item in selected:
+        try:
+            account, broker_key, signature = item.split("||", 2)
+        except ValueError:
+            continue
+
+        ops_assigned_col.update_one(
+            {
+                "account": account,
+                "broker": broker_key,
+                "signature": signature,
+            },
+            {
+                "$set": {
+                    "account": account,
+                    "broker": broker_key,
+                    "signature": signature,
+                    "assigned_to": assignee,
+                    "assigned_by": admin_user,
+                    "assigned_at": now,
+                    "status": "OPEN",
+                }
+            },
+            upsert=True,
+        )
+
+    return redirect(url_for("admin_aged_breaks"))
+
+
 # -------------------------------------------------
 # ADMIN: Cleared Breaks by User (summary per day)
 # -------------------------------------------------
@@ -1095,3 +1198,4 @@ def export_cleared():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))  # 👈 use Railway PORT
     app.run(host="0.0.0.0", port=port, debug=False)
+
