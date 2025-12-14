@@ -855,19 +855,21 @@ def api_my_assigned_breaks():
                 "assigned_to": username,
                 "status": "OPEN",
             },
-            {"_id": 0, "signature": 1, "assigned_to": 1},
+            {"_id": 0, "signature": 1, "assigned_to": 1, "assigned_by": 1, "assigned_at": 1},
         )
     )
-
     sigs = {d["signature"] for d in assigned_docs}
     if not sigs:
-        # nothing assigned to this user for that acc+broker
         return jsonify(ok=True, rows=[])
 
-    # small lookup for assigned_to (mostly redundant because it's always the same user,
-    # but useful for the "Assigned" column in the table)
+    # lookup for extra assignment data
     assigned_lookup = {
-        d["signature"]: d.get("assigned_to", username) for d in assigned_docs
+        d["signature"]: {
+            "assigned_to": d.get("assigned_to", username),
+            "assigned_by": d.get("assigned_by", ""),
+            "assigned_at": d.get("assigned_at"),
+        }
+        for d in assigned_docs
     }
 
     df = mongo_handler.load_session_rec(rec_key)
@@ -927,13 +929,21 @@ def api_my_assigned_breaks():
             date_str = ""
             age_days = ""
 
+        meta = assigned_lookup.get(sig, {})
+        assigned_at_val = meta.get("assigned_at")
+        if assigned_at_val:
+            try:
+                assigned_at_str = assigned_at_val.strftime("%Y-%m-%d %H:%M")
+            except Exception:
+                assigned_at_str = str(assigned_at_val)
+        else:
+            assigned_at_str = ""
+
         rows.append(
             {
-                "account": account,                # NEW
-                "broker_label": broker_label,      # NEW – for display
-                "broker_key": broker_key,          # NEW – if you need it
-                "assigned_to": assigned_lookup.get(sig, username),  # NEW
-
+                "account": account,
+                "broker_label": broker_label,
+                "broker_key": broker_key,
                 "rowid": int(r.get("RowID")),
                 "signature": sig,
                 "date": date_str,
@@ -941,12 +951,16 @@ def api_my_assigned_breaks():
                 "symbol": str(r.get("Symbol") or ""),
                 "description": str(r.get("Description") or ""),
                 "at": float(r.get("AT") or 0.0),
-                "broker": float(r.get("Broker") or 0.0),
+                "broker_amt": float(r.get("Broker") or 0.0),
                 "comments": str(r.get("Comments") or ""),
+                "assigned_to": meta.get("assigned_to", username),
+                "assigned_by": meta.get("assigned_by", ""),
+                "assigned_at": assigned_at_str,
             }
         )
 
     return jsonify(ok=True, rows=rows)
+
 
 
 
@@ -1327,6 +1341,7 @@ def export_cleared():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))  # 👈 use Railway PORT
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
