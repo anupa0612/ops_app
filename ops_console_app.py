@@ -855,12 +855,20 @@ def api_my_assigned_breaks():
                 "assigned_to": username,
                 "status": "OPEN",
             },
-            {"_id": 0, "signature": 1},
+            {"_id": 0, "signature": 1, "assigned_to": 1},
         )
     )
+
     sigs = {d["signature"] for d in assigned_docs}
     if not sigs:
+        # nothing assigned to this user for that acc+broker
         return jsonify(ok=True, rows=[])
+
+    # small lookup for assigned_to (mostly redundant because it's always the same user,
+    # but useful for the "Assigned" column in the table)
+    assigned_lookup = {
+        d["signature"]: d.get("assigned_to", username) for d in assigned_docs
+    }
 
     df = mongo_handler.load_session_rec(rec_key)
     if df is None or df.empty:
@@ -921,6 +929,11 @@ def api_my_assigned_breaks():
 
         rows.append(
             {
+                "account": account,                # NEW
+                "broker_label": broker_label,      # NEW – for display
+                "broker_key": broker_key,          # NEW – if you need it
+                "assigned_to": assigned_lookup.get(sig, username),  # NEW
+
                 "rowid": int(r.get("RowID")),
                 "signature": sig,
                 "date": date_str,
@@ -934,6 +947,7 @@ def api_my_assigned_breaks():
         )
 
     return jsonify(ok=True, rows=rows)
+
 
 
 # -------------------------------------------------
@@ -1313,5 +1327,6 @@ def export_cleared():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))  # 👈 use Railway PORT
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
