@@ -663,41 +663,39 @@
         return true;
       });
 
-      rows.forEach((r, idx) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="col-checkbox">
-            <input type="checkbox" class="chk-assigned-row" data-index="${idx}">
-          </td>
-          <td>${r.account || ""}</td>
-          <td>${r.broker_label || ""}</td>
-          <td>${r.date || ""}</td>
-          <td class="col-money">
-            ${r.age === "" || r.age == null ? "" : r.age}
-          </td>
-          <td>${r.symbol || ""}</td>
-          <td>${r.description || ""}</td>
-          <td class="col-money">${formatMoney(r.at)}</td>
-          <td>
-            <span class="assigned-pill">
-              <span class="status-dot"></span>
-              ${r.assigned_to || r.assigned_by || "Assigned"}
-              ${r.assigned_at ? " · " + r.assigned_at : ""}
-            </span>
-          </td>
+        rows.forEach((r, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="col-checkbox">
+              <input type="checkbox" class="chk-assigned-row" data-index="${idx}">
+            </td>
+            <td>${r.account || ""}</td>
+            <td>${r.broker_label || ""}</td>
+            <td>${r.date || ""}</td>
+            <td class="col-money">
+              ${r.age === "" || r.age == null ? "" : r.age}
+            </td>
+            <td>${r.symbol || ""}</td>
+            <td>${r.description || ""}</td>
+            <!-- AT column: amount only -->
+            <td class="col-money">${formatMoney(r.at)}</td>
+            <!-- Broker column: amount only -->
+            <td class="col-money">${formatMoney(r.broker_amt)}</td>
+            <!-- Assigned column: pill -->
+            <td>
+              <span class="assigned-pill">
+                <span class="status-dot"></span>
+                ${r.assigned_to || r.assigned_by || "Assigned"}
+                ${r.assigned_at ? " · " + r.assigned_at : ""}
+              </span>
+            </td>
+            <td>
+              <textarea class="comments-input" data-index="${idx}">${r.comments || ""}</textarea>
+            </td>
+          `;
+          assignedTbody.appendChild(tr);
+        });
 
-            <span class="assigned-pill">
-              <span class="status-dot"></span>
-              ${r.assigned_by || "Assigned"}
-              ${r.assigned_at ? " · " + r.assigned_at : ""}
-            </span>
-          </td>
-          <td>
-            <textarea class="comments-input" data-index="${idx}">${r.comments || ""}</textarea>
-          </td>
-        `;
-        assignedTbody.appendChild(tr);
-      });
 
       assignedCount.textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
     }
