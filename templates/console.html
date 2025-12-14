@@ -101,6 +101,25 @@
       font-size: 14px;
     }
 
+    .user-name {
+      color: var(--muted);
+    }
+
+    .btn-ghost {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(7, 11, 24, 0.9);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
     /* Admin dropdown */
     .admin-menu {
       position: relative;
@@ -149,26 +168,6 @@
     /* show menu on hover */
     .admin-menu:hover .admin-dropdown {
       display: block;
-    }
-
-
-    .user-name {
-      color: var(--muted);
-    }
-
-    .btn-ghost {
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border-soft);
-      background: rgba(7, 11, 24, 0.9);
-      color: var(--muted);
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .btn-ghost:hover {
-      border-color: var(--accent);
-      color: var(--text);
     }
 
     main {
@@ -521,44 +520,38 @@
           <span class="pill-dot"></span>
           Cash Recon · Ops Break Console
         </div>
-        <div class="title-main">Outstanding & Cleared Breaks</div>
+        <div class="title-main">Outstanding &amp; Cleared Breaks</div>
         <div class="title-sub">View, clear, undo and export cash reconciliation breaks.</div>
       </div>
-          <div class="user-block">
-            <span class="user-name">
-              Signed in as <strong>{{ ops_user }}</strong>
-              {% if ops_role == "admin" %}
-                <span style="opacity:.7;">(admin)</span>
-              {% endif %}
-            </span>
-          
-            <!-- My Assigned Breaks button for all users -->
-            <a href="{{ url_for('my_assigned_breaks') }}">
-              <button class="btn-ghost" type="button">My Assigned Breaks</button>
-            </a>
-          
-            <a href="{{ url_for('logout') }}">
-              <button class="btn-ghost" type="button">Sign out</button>
-            </a>
-          </div>
 
+      <div class="user-block">
+        <span class="user-name">
+          Signed in as <strong>{{ ops_user }}</strong>
           {% if ops_role == "admin" %}
-          <div class="admin-menu">
-            <button class="btn-ghost" type="button">
-              Admin
-            </button>
-            <div class="admin-dropdown">
-              <a href="{{ url_for('admin_users') }}">Manage Users</a>
-              <a href="{{ url_for('admin_aged_breaks') }}">Aged Breaks (20+ days)</a>
-              <a href="{{ url_for('admin_cleared_summary') }}">Cleared Breaks by User</a>
-            </div>
-          </div>
+            <span style="opacity:.7;">(admin)</span>
           {% endif %}
+        </span>
 
-          <a href="{{ url_for('logout') }}">
-            <button class="btn-ghost" type="button">Sign out</button>
-          </a>
+        <!-- My Assigned Breaks button for all users -->
+        <a href="{{ url_for('my_assigned_breaks') }}">
+          <button class="btn-ghost" type="button">My Assigned Breaks</button>
+        </a>
+
+        {% if ops_role == "admin" %}
+        <div class="admin-menu">
+          <button class="btn-ghost" type="button">Admin</button>
+          <div class="admin-dropdown">
+            <a href="{{ url_for('admin_users') }}">Manage Users</a>
+            <a href="{{ url_for('admin_aged_breaks') }}">Aged Breaks (20+ days)</a>
+            <a href="{{ url_for('admin_cleared_summary') }}">Cleared Breaks by User</a>
+          </div>
         </div>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}">
+          <button class="btn-ghost" type="button">Sign out</button>
+        </a>
+      </div>
     </header>
 
     <main>
@@ -593,7 +586,8 @@
 
         <div id="loadMessage" class="field" style="flex:1; min-width:180px;">
           <label>Current status</label>
-          <div id="statusText" class="title-sub">Select account &amp; broker and click <strong>Load Breaks</strong>.
+          <div id="statusText" class="title-sub">
+            Select account &amp; broker and click <strong>Load Breaks</strong>.
           </div>
         </div>
       </section>
@@ -809,8 +803,6 @@
 
       outCount.textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
     }
-
-
 
     function renderCleared() {
       clTbody.innerHTML = "";
@@ -1144,6 +1136,5 @@
     });
   </script>
 </body>
-
 
 </html>
