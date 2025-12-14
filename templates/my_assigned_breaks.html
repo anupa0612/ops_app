@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Ops Break Console · My Assigned Breaks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-soft: #0a1020;
+      --panel: #0d1426;
+      --panel-soft: #121a30;
+      --accent: #4f9cff;
+      --accent-soft: rgba(79, 156, 255, 0.12);
+      --danger: #ff6b81;
+      --border: #252f4a;
+      --border-soft: #1b2340;
+      --text: #f5f7ff;
+      --muted: #a8b4d4;
+      --muted-soft: #6e7aa0;
+      --success: #22c55e;
+      --warn: #eab308;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, #1b2648 0, transparent 60%),
+        radial-gradient(circle at bottom, #090f1e 0, #050816 70%);
+      color: var(--text);
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(120deg, rgba(12, 19, 40, 0.96), rgba(3, 7, 18, 0.98));
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-main {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .title-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px 4px 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.24);
+    }
+
+    .user-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .user-name {
+      color: var(--muted);
+    }
+
+    .btn-ghost {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(7, 11, 24, 0.9);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* Optional admin menu (only visible if ops_role == "admin") */
+    .admin-menu {
+      position: relative;
+    }
+
+    .admin-menu > .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 18px;
+    }
+
+    .admin-menu > .btn-ghost::after {
+      content: "▾";
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .admin-dropdown {
+      position: absolute;
+      right: 0;
+      top: 115%;
+      min-width: 220px;
+      background: var(--panel-soft);
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+      padding: 6px 0;
+      display: none;
+      z-index: 100;
+    }
+
+    .admin-dropdown a {
+      display: block;
+      padding: 8px 14px;
+      font-size: 13px;
+      text-decoration: none;
+      color: var(--muted);
+    }
+
+    .admin-dropdown a:hover {
+      background: rgba(79, 156, 255, 0.18);
+      color: var(--text);
+    }
+
+    .admin-menu.open .admin-dropdown {
+      display: block;
+    }
+
+    main {
+      flex: 1;
+      padding: 16px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: linear-gradient(145deg, rgba(13, 20, 38, 0.96), rgba(12, 19, 40, 0.96));
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+    }
+
+    .field label {
+      color: var(--muted-soft);
+      font-weight: 500;
+    }
+
+    select {
+      min-width: 180px;
+    }
+
+    select,
+    input[type="text"] {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #050816;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      min-height: 34px;
+    }
+
+    select:focus,
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(79, 156, 255, 0.7);
+    }
+
+    .btn-primary {
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #4f9cff, #8b5cff);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.55);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 22px rgba(37, 99, 235, 0.5);
+    }
+
+    .btn-secondary {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #050816;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .content-card {
+      flex: 1;
+      background: linear-gradient(160deg, rgba(9, 14, 30, 0.98), rgba(8, 13, 28, 0.98));
+      border-radius: 16px;
+      border: 1px solid var(--border-soft);
+      padding: 14px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .table-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 2px;
+      font-size: 13px;
+      color: var(--muted-soft);
+    }
+
+    .search-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .search-row input {
+      width: 160px;
+      font-size: 13px;
+      padding: 6px 8px;
+      min-height: 30px;
+    }
+
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      border-radius: 12px;
+      background: radial-gradient(circle at top, #121b3a 0, #060a18 60%);
+      border: 1px solid var(--border);
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: rgba(10, 16, 35, 0.98);
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--muted);
+      font-weight: 500;
+      background: radial-gradient(circle at top, #162243 0, #070b15 70%);
+    }
+
+    tbody {
+      background: rgba(4, 7, 16, 0.96);
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: rgba(18, 24, 48, 0.7);
+    }
+
+    tbody tr:hover {
+      background-color: rgba(79, 156, 255, 0.12);
+    }
+
+    td {
+      padding: 6px 6px;
+      border-bottom: 1px solid rgba(26, 31, 56, 0.7);
+      vertical-align: top;
+    }
+
+    .col-checkbox {
+      width: 40px;
+      text-align: center;
+    }
+
+    .col-money {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .comments-input {
+      width: 100%;
+      min-width: 200px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      background: rgba(3, 7, 18, 0.96);
+      color: var(--text);
+      font-size: 13px;
+      resize: vertical;
+      min-height: 30px;
+    }
+
+    .comments-input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 1px rgba(79, 156, 255, 0.5);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #bbf7d0;
+    }
+
+    .status-pill.pending {
+      background: rgba(234, 179, 8, 0.12);
+      color: #facc15;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .assigned-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(79, 156, 255, 0.15);
+      color: #bfdbfe;
+    }
+
+    .table-footer {
+      padding: 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted-soft);
+      border-top: 1px solid var(--border-soft);
+      background: rgba(7, 11, 20, 0.96);
+    }
+
+    .badge-count {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(79, 156, 255, 0.15);
+      color: #bfdbfe;
+      font-size: 11px;
+    }
+
+    .error-banner {
+      margin-top: 4px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(248, 113, 113, 0.7);
+      background: rgba(248, 113, 113, 0.1);
+      color: #fecaca;
+      font-size: 12px;
+      display: none;
+    }
+
+    a.link-back {
+      font-size: 13px;
+      color: var(--muted-soft);
+      text-decoration: none;
+    }
+
+    a.link-back:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 900px) {
+      header {
+        padding-inline: 12px;
+      }
+
+      main {
+        padding: 12px;
+      }
+
+      .toolbar {
+        padding: 10px 10px;
+      }
+
+      select,
+      input[type="text"] {
+        min-width: 140px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="title-block">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Cash Recon · Ops Break Console
+        </div>
+        <div class="title-main">My Assigned Breaks</div>
+        <div class="title-sub">Review and clear breaks that have been assigned to you.</div>
+      </div>
+      <div class="user-block">
+        <span class="user-name">
+          Signed in as <strong>{{ ops_user }}</strong>
+          {% if ops_role == "admin" %}
+          <span style="opacity:.7;">(admin)</span>
+          {% endif %}
+        </span>
+
+        {% if ops_role == "admin" %}
+        <div class="admin-menu">
+          <button class="btn-ghost admin-toggle" type="button">Admin</button>
+          <div class="admin-dropdown">
+            <a href="{{ url_for('admin_users') }}">Manage Users</a>
+            <a href="{{ url_for('admin_aged_breaks') }}">Aged Breaks (20+ days)</a>
+            <a href="{{ url_for('admin_cleared_summary') }}">Cleared Breaks by User</a>
+            <a href="{{ url_for('console') }}">Back to Break Console</a>
+          </div>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}">
+          <button class="btn-ghost" type="button">Sign out</button>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <!-- Top toolbar: Account/Broker + Load -->
+      <section class="toolbar">
+        <div class="field">
+          <label for="accountSelect">Account</label>
+          <select id="accountSelect">
+            <option value="">All accounts</option>
+            {% for acc in accounts %}
+            <option value="{{ acc }}">{{ acc }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="brokerSelect">Broker</label>
+          <select id="brokerSelect">
+            <option value="">All brokers</option>
+            {% for b in brokers %}
+            <option value="{{ b }}">{{ b }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="btnLoadAssigned" class="btn-primary" type="button">
+            Load Assigned Breaks
+          </button>
+        </div>
+
+        <div class="field" style="flex:1; min-width:220px;">
+          <label>Status</label>
+          <div id="statusText" class="title-sub">
+            Choose Account &amp; Broker (or leave as All) then click <strong>Load Assigned Breaks</strong>.
+          </div>
+        </div>
+      </section>
+
+      <!-- Assigned breaks content -->
+      <section class="content-card">
+        <div class="table-toolbar">
+          <div class="search-row">
+            <input id="searchSymbol" type="text" placeholder="Search Symbol" />
+            <input id="searchDesc" type="text" placeholder="Search Description" />
+            <input id="searchAT" type="text" placeholder="Search AT" />
+            <input id="searchBroker" type="text" placeholder="Search Broker" />
+          </div>
+          <div>
+            <button id="btnClearSelected" class="btn-primary" type="button">Clear Selected</button>
+            <button id="btnUndoSelected" class="btn-secondary" type="button">Undo Selected</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div style="overflow:auto; flex:1; min-height:0;">
+            <table id="tableAssigned">
+              <thead>
+                <tr>
+                  <th class="col-checkbox"><input type="checkbox" id="chkAll" /></th>
+                  <th style="width:90px;">Account</th>
+                  <th style="width:90px;">Broker</th>
+                  <th style="width:90px;">Date</th>
+                  <th style="width:70px; text-align:right;">Age</th>
+                  <th style="width:90px;">Symbol</th>
+                  <th>Description</th>
+                  <th style="width:110px;" class="col-money">AT</th>
+                  <th style="width:110px;" class="col-money">Broker</th>
+                  <th style="width:130px;">Assigned</th>
+                  <th style="width:260px;">Comments (editable)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- rows injected by JS -->
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="assignedCount" class="badge-count">0 rows</span>
+            <span style="font-size:12px;">You can clear these breaks directly from this screen.</span>
+          </div>
+        </div>
+        <div id="errorBox" class="error-banner"></div>
+      </section>
+
+      <a href="{{ url_for('console') }}" class="link-back">
+        ← Back to Outstanding &amp; Cleared Breaks
+      </a>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      assigned: [],
+    };
+
+    const accountSelect = document.getElementById("accountSelect");
+    const brokerSelect = document.getElementById("brokerSelect");
+    const statusText = document.getElementById("statusText");
+    const assignedTbody = document.querySelector("#tableAssigned tbody");
+    const errorBox = document.getElementById("errorBox");
+    const assignedCount = document.getElementById("assignedCount");
+
+    const searchSymbol = document.getElementById("searchSymbol");
+    const searchDesc = document.getElementById("searchDesc");
+    const searchAT = document.getElementById("searchAT");
+    const searchBroker = document.getElementById("searchBroker");
+    const chkAll = document.getElementById("chkAll");
+
+    function showError(msg) {
+      if (!msg) {
+        errorBox.style.display = "none";
+        errorBox.textContent = "";
+        return;
+      }
+      errorBox.style.display = "block";
+      errorBox.textContent = msg;
+    }
+
+    function formatMoney(v) {
+      const n = Number(v || 0);
+      if (isNaN(n) || Math.abs(n) < 0.005) return "";
+      return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function getFilters() {
+      return {
+        symbol: searchSymbol.value.toLowerCase(),
+        desc: searchDesc.value.toLowerCase(),
+        at: searchAT.value.toLowerCase(),
+        broker: searchBroker.value.toLowerCase(),
+        account: accountSelect.value.toLowerCase(),
+        brokerFilter: brokerSelect.value.toLowerCase(),
+      };
+    }
+
+    function renderAssigned() {
+      assignedTbody.innerHTML = "";
+      const filters = getFilters();
+
+      const rows = state.assigned.filter(r => {
+        if (filters.account && String(r.account || "").toLowerCase() !== filters.account) return false;
+        if (filters.brokerFilter && String(r.broker_label || "").toLowerCase() !== filters.brokerFilter) return false;
+        if (filters.symbol && !String(r.symbol || "").toLowerCase().includes(filters.symbol)) return false;
+        if (filters.desc && !String(r.description || "").toLowerCase().includes(filters.desc)) return false;
+        if (filters.at && !String(r.at || "").toLowerCase().includes(filters.at)) return false;
+        if (filters.broker && !String(r.broker_label || "").toLowerCase().includes(filters.broker)) return false;
+        return true;
+      });
+
+      rows.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="col-checkbox">
+            <input type="checkbox" class="chk-assigned-row" data-index="${idx}">
+          </td>
+          <td>${r.account || ""}</td>
+          <td>${r.broker_label || ""}</td>
+          <td>${r.date || ""}</td>
+          <td class="col-money">
+            ${r.age === "" || r.age == null ? "" : r.age}
+          </td>
+          <td>${r.symbol || ""}</td>
+          <td>${r.description || ""}</td>
+          <td class="col-money">${formatMoney(r.at)}</td>
+          <td class="col-money">${formatMoney(r.broker_amt)}</td>
+          <td>
+            <span class="assigned-pill">
+              <span class="status-dot"></span>
+              ${r.assigned_by || "Assigned"}
+              ${r.assigned_at ? " · " + r.assigned_at : ""}
+            </span>
+          </td>
+          <td>
+            <textarea class="comments-input" data-index="${idx}">${r.comments || ""}</textarea>
+          </td>
+        `;
+        assignedTbody.appendChild(tr);
+      });
+
+      assignedCount.textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
+    }
+
+    async function loadAssigned() {
+      const account = accountSelect.value;
+      const broker = brokerSelect.value;
+      showError("");
+
+      statusText.textContent = "Loading assigned breaks…";
+      try {
+        const res = await fetch("/api/my_assigned_breaks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account, broker }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showError(data.error || "Failed to load assigned breaks.");
+          state.assigned = [];
+          renderAssigned();
+          statusText.textContent = "Failed to load assigned breaks.";
+          return;
+        }
+        state.assigned = data.rows || [];
+        renderAssigned();
+        if (data.message) {
+          statusText.textContent = data.message;
+        } else {
+          statusText.textContent = `Loaded ${state.assigned.length} assigned break(s).`;
+        }
+      } catch (err) {
+        console.error(err);
+        showError("Error while loading assigned breaks.");
+        statusText.textContent = "Error while loading. Please try again.";
+      }
+    }
+
+    async function clearSelected() {
+      const checkboxes = document.querySelectorAll(".chk-assigned-row");
+      const rowsToClear = [];
+      let selectedAccount = null;
+      let selectedBroker = null;
+
+      checkboxes.forEach(ch => {
+        if (ch.checked) {
+          const idx = Number(ch.dataset.index);
+          const row = state.assigned[idx];
+          if (row) {
+            if (!selectedAccount) {
+              selectedAccount = row.account;
+              selectedBroker = row.broker_label;
+            }
+            rowsToClear.push({ rowid: row.rowid, signature: row.signature });
+          }
+        }
+      });
+
+      if (!rowsToClear.length) {
+        showError("No rows selected.");
+        return;
+      }
+
+      if (!selectedAccount || !selectedBroker) {
+        showError("Account or Broker missing on selected rows.");
+        return;
+      }
+
+      showError("");
+      statusText.textContent = "Clearing selected assigned breaks…";
+
+      try {
+        const res = await fetch("/api/clear_rows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account: selectedAccount,
+            broker: selectedBroker,
+            rows: rowsToClear,
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showError(data.error || "Failed to clear selected breaks.");
+          statusText.textContent = "Failed to clear breaks.";
+          return;
+        }
+        await loadAssigned();
+        statusText.textContent = "Selected breaks cleared.";
+      } catch (err) {
+        console.error(err);
+        showError("Error while clearing breaks.");
+        statusText.textContent = "Error while clearing.";
+      }
+    }
+
+    async function undoSelected() {
+      const checkboxes = document.querySelectorAll(".chk-assigned-row");
+      const rowsToUndo = [];
+      let selectedAccount = null;
+      let selectedBroker = null;
+
+      checkboxes.forEach(ch => {
+        if (ch.checked) {
+          const idx = Number(ch.dataset.index);
+          const row = state.assigned[idx];
+          if (row) {
+            if (!selectedAccount) {
+              selectedAccount = row.account;
+              selectedBroker = row.broker_label;
+            }
+            rowsToUndo.push({
+              source: "rec",
+              rowid: row.rowid,
+              signature: row.signature,
+            });
+          }
+        }
+      });
+
+      if (!rowsToUndo.length) {
+        showError("No rows selected.");
+        return;
+      }
+
+      if (!selectedAccount || !selectedBroker) {
+        showError("Account or Broker missing on selected rows.");
+        return;
+      }
+
+      showError("");
+      statusText.textContent = "Undoing selected clears/comments…";
+
+      try {
+        const res = await fetch("/api/undo_rows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account: selectedAccount,
+            broker: selectedBroker,
+            rows: rowsToUndo,
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showError(data.error || "Failed to undo.");
+          statusText.textContent = "Undo failed.";
+          return;
+        }
+        await loadAssigned();
+        statusText.textContent = "Undo completed.";
+      } catch (err) {
+        console.error(err);
+        showError("Error while undoing.");
+        statusText.textContent = "Error while undoing.";
+      }
+    }
+
+    async function saveComment(idx) {
+      const row = state.assigned[idx];
+      if (!row) return;
+
+      const textarea = document.querySelector(
+        `.comments-input[data-index="${idx}"]`
+      );
+      if (!textarea) return;
+
+      const newText = textarea.value;
+
+      try {
+        const res = await fetch("/api/update_comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account: row.account,
+            broker: row.broker_label,
+            rowid: row.rowid,
+            comment: newText,
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showError(data.error || "Failed to update comment.");
+          return;
+        }
+        row.comments = data.comment;
+      } catch (err) {
+        console.error(err);
+        showError("Error while updating comment.");
+      }
+    }
+
+    // Events
+    document.getElementById("btnLoadAssigned").addEventListener("click", loadAssigned);
+    document.getElementById("btnClearSelected").addEventListener("click", clearSelected);
+    document.getElementById("btnUndoSelected").addEventListener("click", undoSelected);
+
+    [searchSymbol, searchDesc, searchAT, searchBroker].forEach(inp => {
+      inp.addEventListener("input", renderAssigned);
+    });
+
+    if (chkAll) {
+      chkAll.addEventListener("change", () => {
+        document.querySelectorAll(".chk-assigned-row").forEach(ch => {
+          ch.checked = chkAll.checked;
+        });
+      });
+    }
+
+    assignedTbody.addEventListener("blur", (e) => {
+      if (e.target.classList.contains("comments-input")) {
+        const idx = Number(e.target.dataset.index);
+        saveComment(idx);
+      }
+    }, true);
+
+    // Admin dropdown toggle
+    document.addEventListener("click", (e) => {
+      const menu = document.querySelector(".admin-menu");
+      if (!menu) return;
+      const btn = menu.querySelector(".admin-toggle");
+      if (btn && btn.contains(e.target)) {
+        menu.classList.toggle("open");
+      } else if (!menu.contains(e.target)) {
+        menu.classList.remove("open");
+      }
+    });
+  </script>
+</body>
+
+</html>
